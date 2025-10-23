@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from flask_smorest import Api
@@ -9,7 +10,7 @@ from .routes.hello import blp as hello_blp
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-# Configure CORS to allow React dev server and preview origins
+# Configure CORS to allow React dev server, preview origin, and optional deployed FRONTEND_URL
 # - Credentials remain disabled (default False)
 # - Preflight (OPTIONS) will be handled by flask-cors automatically
 allowed_origins = [
@@ -17,6 +18,14 @@ allowed_origins = [
     "http://127.0.0.1:3000",
     "https://vscode-internal-33523-beta.beta01.cloud.kavia.ai:3000",
 ]
+
+# Read FRONTEND_URL from environment and add it if provided (no trailing slash)
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    frontend_url = frontend_url.strip().rstrip("/")
+    if frontend_url and frontend_url not in allowed_origins:
+        allowed_origins.append(frontend_url)
+
 CORS(
     app,
     resources={
