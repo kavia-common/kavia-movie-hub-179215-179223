@@ -9,8 +9,25 @@ from .routes.hello import blp as hello_blp
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-# Configure CORS to allow React dev server origin explicitly
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
+# Configure CORS to allow React dev server and preview origins
+# - Credentials remain disabled (default False)
+# - Preflight (OPTIONS) will be handled by flask-cors automatically
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://vscode-internal-33523-beta.beta01.cloud.kavia.ai:3000",
+]
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": allowed_origins,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": False,
+        }
+    },
+)
 
 # OpenAPI/Docs configuration
 app.config["API_TITLE"] = "My Flask API"
