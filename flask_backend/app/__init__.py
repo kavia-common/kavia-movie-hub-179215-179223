@@ -6,6 +6,7 @@ from flask_smorest import Api
 # Import blueprints
 from .routes.health import blp as health_blp
 from .routes.hello import blp as hello_blp
+from .routes.movies import blp as movies_blp
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -16,15 +17,9 @@ app.url_map.strict_slashes = False
 allowed_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://vscode-internal-33523-beta.beta01.cloud.kavia.ai:3000",
+    "https://vscode-internal-30361-beta.beta01.cloud.kavia.ai:3000",
+    "https://kavia-bootcamp-movie-application.kavia.app/"
 ]
-
-# Read FRONTEND_URL from environment and add it if provided (no trailing slash)
-frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
-    frontend_url = frontend_url.strip().rstrip("/")
-    if frontend_url and frontend_url not in allowed_origins:
-        allowed_origins.append(frontend_url)
 
 CORS(
     app,
@@ -51,3 +46,4 @@ api = Api(app)
 # Register blueprints
 api.register_blueprint(health_blp)
 api.register_blueprint(hello_blp)
+api.register_blueprint(movies_blp)
