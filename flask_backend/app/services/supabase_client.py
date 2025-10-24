@@ -32,13 +32,13 @@ def _create_client() -> Client:
         RuntimeError: If required environment variables are missing.
     """
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_KEY")
+    key = os.getenv("SUPABASE_KEY")
     if not url or not key:
         missing = []
         if not url:
             missing.append("SUPABASE_URL")
         if not key:
-            missing.append("SUPABASE_SERVICE_KEY")
+            missing.append("SUPABASE_KEY")
         raise RuntimeError(
             f"Missing required Supabase configuration: {', '.join(missing)}. "
             "Ensure these are set on the server environment (not exposed to the frontend)."
