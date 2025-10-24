@@ -16,6 +16,8 @@ Usage:
 """
 import os
 import threading
+import logging
+import json
 from typing import Optional
 
 from supabase import Client, create_client
@@ -24,26 +26,47 @@ from supabase import Client, create_client
 _client_lock = threading.Lock()
 _client: Optional[Client] = None
 
+_logger = logging.getLogger("app.supabase")
+
 
 def _create_client() -> Client:
     """Create a new Supabase client using environment variables.
 
     Raises:
-        RuntimeError: If required environment variables are missing.
+        RuntimeError: If required environment variables are missing or client init fails.
     """
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
+    key = os.getenv("SUPABASE_SERVICE_KEY")
+
+    _logger.info(json.dumps({
+        "event": "supabase_create_client_attempt",
+        "has_url": bool(url),
+        "has_service_key": bool(key),
+    }))
+
     if not url or not key:
         missing = []
         if not url:
             missing.append("SUPABASE_URL")
         if not key:
-            missing.append("SUPABASE_KEY")
+            missing.append("SUPABASE_SERVICE_KEY")
+        _logger.error(json.dumps({
+            "event": "supabase_missing_configuration",
+            "missing": missing,
+        }))
         raise RuntimeError(
             f"Missing required Supabase configuration: {', '.join(missing)}. "
             "Ensure these are set on the server environment (not exposed to the frontend)."
         )
-    return create_client(url, key)
+
+    try:
+        client = create_client(url, key)
+        _logger.info(json.dumps({"event": "supabase_client_initialized"}))
+        return client
+    except Exception as exc:
+        # Do not expose secret values in logs; record structured exception and raise a safe message
+        _logger.exception("Supabase client creation failed")
+        raise RuntimeError("Failed to initialize Supabase client") from exc
 
 
 # PUBLIC_INTERFACE
@@ -54,7 +77,7 @@ def get_supabase() -> Client:
         Client: Supabase client instance.
 
     Raises:
-        RuntimeError: If required environment variables are missing.
+        RuntimeError: If required environment variables are missing or initialization fails.
 
     Notes:
         This function is safe to call from multiple threads; the client is initialized once.
