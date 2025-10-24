@@ -12,6 +12,7 @@ class MovieSchema(Schema):
     title = fields.Str(required=True, description="Title of the movie")
     year = fields.Int(allow_none=True, description="Release year of the movie")
     overview = fields.Str(allow_none=True, description="Short description of the movie")
+    photo_url = fields.Str(allow_none=True, description="Poster image URL for the movie")
     created_at = fields.DateTime(dump_only=True, allow_none=True, description="Creation timestamp")
 
 
@@ -19,6 +20,7 @@ class MovieCreateSchema(Schema):
     title = fields.Str(required=True, validate=validate.Length(min=1), description="Title of the movie")
     year = fields.Int(allow_none=True, description="Release year of the movie")
     overview = fields.Str(allow_none=True, description="Short description of the movie")
+    photo_url = fields.Str(allow_none=True, description="Poster image URL for the movie")
 
 
 # Define blueprint for Movies endpoints
@@ -36,6 +38,8 @@ class MoviesList(MethodView):
     @blp.response(200, MovieSchema(many=True), description="List all movies")
     def get(self):
         """Fetch a list of movies from the 'movies' table in Supabase.
+
+        Each movie includes its id, title, year, overview, created_at, and photo_url (if provided).
 
         Returns:
             200: JSON array of movie records.
@@ -58,7 +62,15 @@ class MoviesList(MethodView):
             blp.abort(500, message="Failed to fetch movies")
 
     # PUBLIC_INTERFACE
-    @blp.arguments(MovieCreateSchema, example={"title": "Inception", "year": 2010, "overview": "A mind-bending heist."})
+    @blp.arguments(
+        MovieCreateSchema,
+        example={
+            "title": "Inception",
+            "year": 2010,
+            "overview": "A mind-bending heist.",
+            "photo_url": "https://image.tmdb.org/t/p/w500/example.jpg",
+        },
+    )
     @blp.response(201, MovieSchema, description="Create a new movie")
     def post(self, new_movie):
         """Create a new movie record in the 'movies' table.
@@ -67,6 +79,7 @@ class MoviesList(MethodView):
             - title (string, required)
             - year (integer, optional)
             - overview (string, optional)
+            - photo_url (string, optional) - Poster image URL for the movie
 
         Returns:
             201: The newly created movie record as JSON.
@@ -77,6 +90,12 @@ class MoviesList(MethodView):
         title = (new_movie.get("title") or "").strip()
         if not title:
             blp.abort(400, message="Field 'title' is required and cannot be empty.")
+
+        # photo_url is optional; if provided, ensure it's a string (marshmallow already deserializes to str)
+        # Keeping an explicit check for clarity and to align with the requirement.
+        photo_url = new_movie.get("photo_url", None)
+        if photo_url is not None and not isinstance(photo_url, str):
+            blp.abort(400, message="Field 'photo_url' must be a string if provided.")
 
         try:
             supabase = get_supabase()
