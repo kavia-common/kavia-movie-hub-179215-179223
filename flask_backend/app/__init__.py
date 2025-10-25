@@ -65,7 +65,7 @@ app.logger.info(
 allowed_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://vscode-internal-30361-beta.beta01.cloud.kavia.ai:3000",
+    "https://vscode-internal-19007-beta.beta01.cloud.kavia.ai:3000",
     "https://kavia-bootcamp-movie-application.kavia.app/"
 ]
 
